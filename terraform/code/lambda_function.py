@@ -29,9 +29,8 @@ def lambda_handler(event, context):
             record_data = base64.b64decode(record['kinesis']['data']).decode('utf-8')
 
             print(f"Record Data: {record_data}")
-            # TODO: Do interesting work based on the new data
-            
-
+ 
+            #eval will convert a string into the most convenient structure, in this case a dict
             record_data_dict = eval(record_data)
             
             print(record_data)
