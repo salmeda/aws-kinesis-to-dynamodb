@@ -53,4 +53,10 @@ resource "aws_kinesis_stream" "kinesis-to-dynamodb-kds" {
 
 resource "aws_sns_topic" "kinesis-to-dynamodb-sns" {
   name = "kinesis-to-dynamodb-sns"
+
+    tags = {
+    solution    = "kinesis_to_dynamodb"
+    environment = "dev"
+  } 
+
 }

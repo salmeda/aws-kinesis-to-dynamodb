@@ -1,7 +1,7 @@
 data "archive_file" "python_lambda_package" {  
   type = "zip"  
-  source_file = "code/lambda_funct1.py" 
-  output_path = "nametest.zip"
+  source_file = "code/lambda_function.py" 
+  output_path = "lambda_function.zip"
 }
 
 data "aws_iam_policy_document" "assume_role" {
@@ -50,6 +50,7 @@ resource "aws_iam_policy" "LambdaBasicExecutionRole-kds-to-ddb-policy" {
             "Effect": "Allow",
             "Action": [
                 "logs:CreateLogStream",
+                "logs:CreateLogGroup", 
                 "logs:PutLogEvents"
             ],
             "Resource": [
@@ -110,10 +111,23 @@ resource "aws_iam_policy_attachment" "kinesis-to-ddb-lbd-attch2" {
  
 }
 
+resource "aws_iam_policy_attachment" "kinesis-to-ddb-lbd-attch3" {
+  name       = "kinesis-to-ddb-lbd-attch3" 
+  roles      = [aws_iam_role.kinesis-to-ddb-lbd-role.name]
+  policy_arn = "arn:aws:iam::aws:policy/AWSLambdaExecute"
+ 
+}
 
-resource "aws_lambda_function" "test_lambda_function" {
-        function_name = "lambdaTest"
-        filename      = "nametest.zip"
+resource "aws_iam_policy_attachment" "kinesis-to-ddb-lbd-attch4" {
+  name       = "kinesis-to-ddb-lbd-attch4" 
+  roles      = [aws_iam_role.kinesis-to-ddb-lbd-role.name]
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaDynamoDBExecutionRole"
+ 
+}
+
+resource "aws_lambda_function" "kinesis-to-ddb-lbd" {
+        function_name = "kinesis-to-ddb-lbd"
+        filename      = "lambda_function.zip"
         source_code_hash = data.archive_file.python_lambda_package.output_base64sha256
         role          = aws_iam_role.kinesis-to-ddb-lbd-role.arn
         runtime       = "python3.10"
@@ -124,5 +138,15 @@ resource "aws_lambda_function" "test_lambda_function" {
             solution    = "kinesis_to_dynamodb"
             environment = "dev"
           }
+}
+
+resource "aws_lambda_event_source_mapping" "kinesis-to-ddb-lbd-erm" {
+  event_source_arn  = aws_kinesis_stream.kinesis-to-dynamodb-kds.arn
+  function_name     = aws_lambda_function.kinesis-to-ddb-lbd.arn
+  starting_position = "TRIM_HORIZON"
+
+  depends_on = [
+    aws_iam_policy_attachment.kinesis-to-ddb-lbd-attch2
+  ]
 }
 
