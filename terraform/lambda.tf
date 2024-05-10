@@ -1,5 +1,128 @@
 data "archive_file" "python_lambda_package" {  
   type = "zip"  
-  source_file = "${path.module}/code/lambda_function.py" 
+  source_file = "code/lambda_funct1.py" 
   output_path = "nametest.zip"
 }
+
+data "aws_iam_policy_document" "assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role" "kinesis-to-ddb-lbd-role" {
+  name               = "kinesis-to-ddb-lbd-role"
+  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+
+  tags = {
+            solution    = "kinesis_to_dynamodb"
+            environment = "dev"
+          }
+}
+
+resource "aws_iam_policy" "LambdaBasicExecutionRole-kds-to-ddb-policy" {
+  name        = "LambdaBasicExecutionRole-kds-to-ddb-policy"
+  path        = "/"
+  description = "Policy for Lambda to access Cloud Logs, etc"
+
+  tags = {
+            solution    = "kinesis_to_dynamodb"
+            environment = "dev"
+          }
+# Terraform's "jsonencode" function converts a
+  # Terraform expression result to valid JSON syntax.
+  policy = jsonencode({
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "logs:CreateLogGroup",
+            "Resource": "arn:aws:logs:eu-west-2:178795408598:*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+            ],
+            "Resource": [
+                "arn:aws:logs:eu-west-2:178795408598:log-group:/aws/lambda/kinesis-to-ddb-lambda:*"
+            ]
+        }
+    ]
+})
+}
+
+
+resource "aws_iam_policy" "kinesis-to-ddb-policy" {
+  name        = "kinesis-to-ddb-policy"
+  path        = "/"
+  description = "Policy for Lambda to access Kinesis"
+
+  tags = {
+            solution    = "kinesis_to_dynamodb"
+            environment = "dev"
+          }
+
+  # Terraform's "jsonencode" function converts a
+  # Terraform expression result to valid JSON syntax.
+  policy = jsonencode({
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Effect": "Allow",
+			"Action": [
+				"kinesis:DescribeStream",
+				"kinesis:DescribeStreamSummary",
+				"kinesis:GetRecords",
+				"kinesis:GetShardIterator",
+				"kinesis:ListShards",
+				"kinesis:ListStreams",
+				"kinesis:SubscribeToShard",
+				"logs:CreateLogGroup",
+				"logs:CreateLogStream",
+				"logs:PutLogEvents"
+			],
+			"Resource": "arn:aws:kinesis:eu-west-2:178795408598:stream/kinesis-to-dynamodb-kds"
+		}
+	]
+})
+}
+
+resource "aws_iam_policy_attachment" "kinesis-to-ddb-lbd-attch1" {
+  name       = "kinesis-to-ddb-lbd-attch1" 
+  roles      = [aws_iam_role.kinesis-to-ddb-lbd-role.name]
+  policy_arn = aws_iam_policy.LambdaBasicExecutionRole-kds-to-ddb-policy.arn
+}
+
+
+resource "aws_iam_policy_attachment" "kinesis-to-ddb-lbd-attch2" {
+  name       = "kinesis-to-ddb-lbd-attch2" 
+  roles      = [aws_iam_role.kinesis-to-ddb-lbd-role.name]
+  policy_arn = aws_iam_policy.kinesis-to-ddb-policy.arn
+ 
+}
+
+
+resource "aws_lambda_function" "test_lambda_function" {
+        function_name = "lambdaTest"
+        filename      = "nametest.zip"
+        source_code_hash = data.archive_file.python_lambda_package.output_base64sha256
+        role          = aws_iam_role.kinesis-to-ddb-lbd-role.arn
+        runtime       = "python3.10"
+        handler       = "lambda_function.lambda_handler"
+        timeout       = 10
+
+        tags = {
+            solution    = "kinesis_to_dynamodb"
+            environment = "dev"
+          }
+}
+

@@ -51,38 +51,6 @@ resource "aws_kinesis_stream" "kinesis-to-dynamodb-kds" {
   }
 }
 
-data "aws_iam_policy_document" "assume_role" {
-  statement {
-    effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = ["lambda.amazonaws.com"]
-    }
-
-    actions = ["sts:AssumeRole"]
-  }
-}
-
-resource "aws_iam_role" "iam_for_lambda" {
-  name               = "test-iam_for_lambda"
-  assume_role_policy = data.aws_iam_policy_document.assume_role.json
-}
- 
-
-resource "aws_lambda_function" "test_lambda" {
-  # If the file is not in the current working directory you will need to include a
-  # path.module in the filename.
-  filename      = "lambda_function_payload.json"
-  function_name = "salmeda-lambda_function"
-  role          = aws_iam_role.iam_for_lambda.arn
-  handler       = "index.test"
- 
-  runtime = "python3.10"
-
-  environment {
-    variables = {
-      foo = "bar"
-    }
-  }
+resource "aws_sns_topic" "kinesis-to-dynamodb-sns" {
+  name = "kinesis-to-dynamodb-sns"
 }
