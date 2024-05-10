@@ -97,6 +97,42 @@ resource "aws_iam_policy" "kinesis-to-ddb-policy" {
 })
 }
 
+resource "aws_iam_policy" "kinesis-to-ddb-ddb-policy" {
+  name        = "kinesis-to-ddb-ddb-policy"
+  path        = "/"
+  description = "Policy for Lambda to access ddb"
+
+  tags = {
+            solution    = "kinesis_to_dynamodb"
+            environment = "dev"
+          }
+
+  # Terraform's "jsonencode" function converts a
+  # Terraform expression result to valid JSON syntax.
+  policy = jsonencode({
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "dynamodb:DescribeStream",
+                "dynamodb:GetRecords",
+                "dynamodb:PutItem",
+                "dynamodb:GetShardIterator",
+                "dynamodb:ListStreams",
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+            ],
+            "Resource": "arn:aws:dynamodb:eu-west-2:178795408598:*table/kinesis-to-dynamodb-ddb"
+        }
+    ]
+})
+}
+
+
+
+
 resource "aws_iam_policy_attachment" "kinesis-to-ddb-lbd-attch1" {
   name       = "kinesis-to-ddb-lbd-attch1" 
   roles      = [aws_iam_role.kinesis-to-ddb-lbd-role.name]
@@ -121,7 +157,7 @@ resource "aws_iam_policy_attachment" "kinesis-to-ddb-lbd-attch3" {
 resource "aws_iam_policy_attachment" "kinesis-to-ddb-lbd-attch4" {
   name       = "kinesis-to-ddb-lbd-attch4" 
   roles      = [aws_iam_role.kinesis-to-ddb-lbd-role.name]
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaDynamoDBExecutionRole"
+  policy_arn = aws_iam_policy.kinesis-to-ddb-ddb-policy.arn
  
 }
 

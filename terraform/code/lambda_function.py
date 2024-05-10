@@ -3,16 +3,7 @@ import base64
 import json
 
 print('Starting ...')
-
-def str_to_dict(str_char):
-    string_dict = str_char
-    dict_char = {}
-    
-    for pair in string_dict.split(','):
-        key, value = pair.split('": ')
-        dict_char[key] = value
-        
-    return dict_char
+ 
 
 def lambda_handler(event, context):
     
