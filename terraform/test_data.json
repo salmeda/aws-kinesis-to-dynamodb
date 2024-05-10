@@ -1,6 +1,20 @@
 {
-    "sensorId": 25 ,
-    "s_timestamp": "2024-03-05 14:00:25",
-    "currentTemperature": 24.3,
-    "status": "OK"
-}
+    "Records": [
+      {
+        "kinesis": {
+          "partitionKey": "partitionKey-03",
+          "kinesisSchemaVersion": "1.0",
+          "data": "eyAgICAic2Vuc29ySWQiOiAxNywgICAgInNfdGltZXN0YW1wIjogIjIwMjQtMDUtMTBUMTU6NTU6MTgrMDE6MDAiLCAgICAiY3VycmVudFRlbXBlcmF0dXJlIjogMzYsICAgICJzdGF0dXMiOiAiRkFJTCJ9Cg==",
+          "sequenceNumber": "49545115243490985018280067714973144582180062593244200961",
+          "approximateArrivalTimestamp": 1428537600
+        },
+        "eventSource": "aws:kinesis",
+        "eventID": "shardId-000000000000:49545115243490985018280067714973144582180062593244200961",
+        "invokeIdentityArn": "arn:aws:iam::EXAMPLE",
+        "eventVersion": "1.0",
+        "eventName": "aws:kinesis:record",
+        "eventSourceARN": "arn:aws:kinesis:EXAMPLE",
+        "awsRegion": "us-east-1"
+      }
+    ]
+  }
